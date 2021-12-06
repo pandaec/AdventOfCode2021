@@ -1,0 +1,96 @@
+#!fsharp
+
+let lines = 
+    IO.File.ReadLines @"input\4.txt" 
+    |> List.ofSeq
+let drawnNums = lines[0].Split(",") |> Array.filter(fun k -> k <> "") |> Array.map(fun k -> int k) |> List.ofArray
+lines |> List.truncate 10   
+
+#!fsharp
+
+let allBoards =
+    lines 
+    |> Seq.skip 2 // skip drawn number
+    |> Seq.chunkBySize (6) // chunk by each board 5+1 new line
+    |> Seq.map (fun x -> 
+        let s = String.concat " " (Seq.take 5 x)
+        s.Split(" ") 
+        |> Array.filter(fun k -> k <> "")
+        |> Array.map (fun k -> Some (int k))
+        |> List.ofArray
+        )
+    |> List.ofSeq
+allBoards
+
+#!fsharp
+
+let horizontalCheck = List.chunkBySize 5 [0..24]
+let verticalCheck = [for i in 0..4 -> List.map (fun k -> k + i) [0;5;10;15;20;]]
+
+let bingoCheck = horizontalCheck @ verticalCheck
+bingoCheck
+
+#!fsharp
+
+// Part A
+let rec findFirstBingo boards di = 
+    let isBingo (board: list<option<int>>) = 
+        bingoCheck
+            |> List.exists (fun checkInd -> checkInd |> List.forall (fun k -> Option.isNone board[k]))
+
+    let bingoBoard = boards 
+                    |> List.tryFind isBingo
+                    
+    match bingoBoard with
+    | Some board -> board, drawnNums[di-1]
+    | None -> 
+        let drawn = drawnNums[di]
+        let newBoards = boards 
+                        |> List.map 
+                            (fun bd -> 
+                                bd |> List.map (fun k -> 
+                                        match k with 
+                                            | Some k -> if k = drawn then None else Some k
+                                            | None -> None))
+        findFirstBingo newBoards (di+1)
+
+let (winningBoard, winningNum) = findFirstBingo allBoards 0
+let ans = winningBoard
+            |> List.fold (fun acc x -> 
+                            match x with
+                            | Some d -> acc + d
+                            | None -> acc) 0
+
+ans, winningNum, ans * winningNum
+
+#!fsharp
+
+// Part B
+let rec findLastBingo (boards : list<list<option<int>>>) di = 
+    let isBingo (board: list<option<int>>) = 
+        bingoCheck
+            |> List.exists (fun checkInd -> checkInd |> List.forall (fun k -> Option.isNone board[k]))
+                    
+    match boards.Length with
+    | 1 -> boards[0], drawnNums[di]
+    | _ -> 
+        let drawn = drawnNums[di]
+        let newBoards = boards 
+                        |> List.map 
+                            (fun bd -> 
+                                bd |> List.map (fun k -> 
+                                        match k with 
+                                            | Some k -> if k = drawn then None else Some k
+                                            | None -> None))
+                        |> List.filter (fun bd -> not (isBingo bd))
+        findLastBingo newBoards (di+1)
+
+let (winningBoard, winningNum) = findLastBingo allBoards 0
+let ans = winningBoard
+            |> List.fold (fun acc x -> 
+                            match x with
+                            | Some d -> acc + d
+                            | None -> acc) 0
+// prevent double count
+let b = ans - winningNum
+b, winningNum, b * winningNum

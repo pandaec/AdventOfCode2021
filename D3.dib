@@ -1,0 +1,61 @@
+#!fsharp
+
+let lines = IO.File.ReadLines @"input\3.txt" |> List.ofSeq
+lines
+|> Seq.take (min lines.Length 10)
+
+#!fsharp
+
+// Part A
+let n = lines[0].Length
+let CountOne acc (x:string) = 
+    let z = x|> Seq.map (fun c -> if c = '1' then 1 else 0) |> List.ofSeq
+    List.map2 (+) acc z
+
+let initState =  (List.init n (fun i -> 0))
+let oneCounts = 
+    lines
+        |> List.fold CountOne initState
+        |> List.map (fun c -> if c > lines.Length/2 then 1 else 0)
+
+let gammaStr = oneCounts |> String.Concat
+let epsilonStr = oneCounts |> List.map (fun c -> if c = 1 then 0 else 1) |> String.Concat
+
+let gamma = Convert.ToInt32(gammaStr, 2)
+let epsilon = Convert.ToInt32(epsilonStr, 2)
+
+gamma,epsilon, gamma*epsilon
+
+#!fsharp
+
+// Part B
+let rec findRating (nums:list<string>) mostCommon i =
+    // printfn "%d, %A" i nums 
+    match nums.Length with 
+    | 1 -> nums[0]
+    | _ -> 
+        // Return ('Key * int) list ; Not map
+        let counts = nums |> List.countBy (fun k -> k[i])
+        let optOneCount = counts |> List.tryFind (fun (k,v) -> k = '1')
+        let optZeroCount = counts |> List.tryFind (fun (k,v) -> k = '0')
+        let oneCount = match optOneCount with
+                        | Some(_, v) -> v
+                        | None -> 0
+        let zeroCount = match optZeroCount with
+                        | Some(_, v) -> v
+                        | None -> 0
+        let filterBit = 
+            if mostCommon then
+                if zeroCount > oneCount then '0' else '1'
+            else 
+                if zeroCount <= oneCount then '0' else '1'
+            
+        let filteredList = nums |> List.filter (fun k -> k[i] = filterBit)
+        findRating filteredList mostCommon (i+1)
+
+let oxygenRatingStr = findRating lines true 0
+let co2RatingStr = findRating lines false 0
+let oxygenRating = Convert.ToInt32(oxygenRatingStr, 2)
+let co2Rating = Convert.ToInt32(co2RatingStr, 2)
+
+oxygenRatingStr, co2RatingStr, oxygenRating*co2Rating

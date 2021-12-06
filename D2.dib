@@ -1,0 +1,56 @@
+#!fsharp
+
+type Pos(x: int, y : int) = 
+    member this.x = x
+    member this.y = y
+
+type State(x: int, y : int, aim : int) = 
+    member this.x = x
+    member this.y = y
+    member this.aim = aim
+
+#!fsharp
+
+let lines = IO.File.ReadLines @"input\2.txt"
+lines
+|> Seq.take 10
+
+#!fsharp
+
+// Part A
+let calNextPos (lastPos:Pos) (command : string) =
+    let s = command.Split ' '
+    let cmd = s.[0]
+    let x = s.[1] |> int
+    match cmd with
+    | "forward" -> Pos(lastPos.x + x, lastPos.y)
+    | "down" -> Pos(lastPos.x, lastPos.y + x)
+    | "up" -> Pos(lastPos.x, lastPos.y - x)
+    | _ -> lastPos
+    
+
+let initPos = new Pos(0,0)
+let finalPos = 
+        lines
+        |> Seq.fold calNextPos initPos
+finalPos.x * finalPos.y
+
+#!fsharp
+
+// Part B
+let calNextPos (lastPos:State) (command : string) =
+    let s = command.Split ' '
+    let cmd = s.[0]
+    let x = s.[1] |> int
+    match cmd with
+    | "forward" -> State(lastPos.x + x, lastPos.y + lastPos.aim * x, lastPos.aim)
+    | "down" -> State(lastPos.x, lastPos.y, lastPos.aim + x)
+    | "up" -> State(lastPos.x, lastPos.y, lastPos.aim - x)
+    | _ -> lastPos
+    
+
+let initPos = new State(0,0,0)
+let finalPos = 
+        lines
+        |> Seq.fold calNextPos initPos
+finalPos.x * finalPos.y
