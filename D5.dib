@@ -1,0 +1,39 @@
+#!fsharp
+
+// Record type
+type Point =  
+    {
+        x : int
+        y : int
+    }
+type Line = 
+    { 
+        p1 : Point
+        p2 : Point
+    }
+
+let pointBetween (line:Line) = 
+    match line.p1, line.p2 with
+    | p1, p2 when p1.x = p2.x -> (let range = if p1.y > p2.y then [p2.y..p1.y] else [p1.y..p2.y]
+                                [for i in range -> {x = p1.x; y = i}])
+    | p1, p2 when p1.y = p1.y -> (let range = if p1.x > p2.x then [p2.x..p1.x] else [p1.x..p2.x]
+                                [for i in range -> {x = i; y = p1.y}])
+    | _ -> []
+
+#!fsharp
+
+let lines = IO.File.ReadLines @"input\t5.txt"
+            |> Seq.map (fun s -> s.Split(" -> "))
+            |> Seq.map (fun s -> 
+                            let a = s[0].Split(",")
+                            let b = s[1].Split(",")
+                            {p1 = {x = int a[0]; y = int a[1]}; p2 = {x = int b[0]; y = int b[1]}}
+                        )
+lines |> Seq.truncate 4
+
+#!fsharp
+
+// Part A
+
+let straight = lines |> Seq.filter (fun line -> line.p1.x = line.p2.x || line.p1.y = line.p2.y)
+pointBetween (Seq.head straight)
