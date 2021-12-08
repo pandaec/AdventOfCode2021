@@ -12,28 +12,63 @@ type Line =
         p2 : Point
     }
 
+let isVertical line = line.p1.x = line.p2.x
+let IsHorizontal line = line.p1.y = line.p2.y
+let isDiagnoal line = abs(line.p1.x-line.p2.x) = abs(line.p1.y-line.p2.y)
+let isVerticalOrHorizontal line = isVertical line || IsHorizontal line
+let isStraight line = isVerticalOrHorizontal line || isDiagnoal line
+
 let pointBetween (line:Line) = 
     match line.p1, line.p2 with
-    | p1, p2 when p1.x = p2.x -> (let range = if p1.y > p2.y then [p2.y..p1.y] else [p1.y..p2.y]
-                                [for i in range -> {x = p1.x; y = i}])
-    | p1, p2 when p1.y = p1.y -> (let range = if p1.x > p2.x then [p2.x..p1.x] else [p1.x..p2.x]
-                                [for i in range -> {x = i; y = p1.y}])
+    | p1, p2 when p1.x = p2.x -> (let inc = if p1.y<p2.y then 1 else -1
+                                  [for i in [p1.y..inc..p2.y] -> {x = p1.x; y = i}])
+    | p1, p2 when p1.y = p2.y -> (let inc = if p1.x < p2.x then 1 else -1
+                                  [for i in [p1.x..inc..p2.x] -> {x = i; y = p1.y}])
+    | p1, p2 when abs(p1.x-p2.x) = abs(p1.y-p2.y) ->
+                                (let xinc = if p1.x<p2.x then 1 else -1
+                                 let yinc = if p1.y<p2.y then 1 else -1
+                                 let len = abs(p1.x-p2.x)
+                                 [for i in [0..len] -> {x=p1.x+i*xinc;y=p1.y+i*yinc}])
     | _ -> []
 
 #!fsharp
 
-let lines = IO.File.ReadLines @"input\t5.txt"
+let lines = IO.File.ReadAllLines @"input\5.txt"
             |> Seq.map (fun s -> s.Split(" -> "))
             |> Seq.map (fun s -> 
                             let a = s[0].Split(",")
                             let b = s[1].Split(",")
                             {p1 = {x = int a[0]; y = int a[1]}; p2 = {x = int b[0]; y = int b[1]}}
                         )
-lines |> Seq.truncate 4
 
 #!fsharp
 
 // Part A
+let vertHoriLine = lines |> Seq.filter (fun line -> isVerticalOrHorizontal line)
 
-let straight = lines |> Seq.filter (fun line -> line.p1.x = line.p2.x || line.p1.y = line.p2.y)
-pointBetween (Seq.head straight)
+let mergePoint acc point = 
+    Map.change point (fun p -> 
+        match p with
+        | Some s -> Some (s + 1) 
+        | None -> Some 1
+    ) acc
+
+vertHoriLine 
+|> Seq.map pointBetween
+|> Seq.reduce List.append 
+|> Seq.fold mergePoint Map.empty
+|> Map.values
+|> Seq.filter (fun v -> v > 1)
+|> Seq.length
+
+#!fsharp
+
+// Part B
+let straight = lines |> Seq.filter (fun line -> isStraight line)
+
+straight 
+|> Seq.map pointBetween
+|> Seq.reduce List.append 
+|> Seq.fold mergePoint Map.empty
+|> Map.filter (fun k v -> v > 1)
+|> Seq.length
