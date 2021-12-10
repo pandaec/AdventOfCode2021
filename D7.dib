@@ -1,0 +1,21 @@
+#!fsharp
+
+let s = IO.File.ReadLines @"input\7.txt" |> Seq.head
+let input = s.Split(',') |> Seq.map (int) |> List.ofSeq
+
+#!fsharp
+
+let findMinFuelPos (allPos:list<int>) costFunc = 
+    [1..allPos.Length]
+    |> List.map (fun i -> List.sum [for p in allPos -> costFunc i p])
+    |> List.min
+
+let partA = findMinFuelPos input (fun a b -> abs(a-b))
+
+let costB a b = 
+    let dist = abs(a-b)
+    (1 + dist) * dist / 2
+
+let partB = findMinFuelPos input costB
+
+partB
