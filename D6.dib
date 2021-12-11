@@ -29,10 +29,8 @@ let rec updateList (tank:List<int64>) turn =
     match turn with
     | 0 -> tank
     | _ -> (
-        let zero::one::two::three::four::five::six::seven::eight = tank
-        let newSix = seven + zero
-        let newEight = zero
-        let newTank = (one::two::three::four::five::six::newSix::eight) @ [newEight]
+        let [zero;one;two;three;four;five;six;seven;eight] = tank
+        let newTank = [one;two;three;four;five;six;seven + zero;eight;zero]
         updateList newTank (turn-1)
     )
 
