@@ -157,6 +157,8 @@ let findDigitSignal (entry:State) =
                     | d when d = seven -> "7"
                     | d when d = eight -> "8"
                     | d when d = nine  -> "9")
+    |> String.Concat
+    |> int
 
     // // Part A return
     // let partAPattern = [one;four;seven;eight]
@@ -167,6 +169,11 @@ let findDigitSignal (entry:State) =
 
 
 // Part A Solution
-entries 
-|> Seq.map findDigitSignal
+// entries 
+// |> Seq.map findDigitSignal
 // |> Seq.sum
+
+// Part B
+entries
+|> Seq.map findDigitSignal
+|> Seq.sum
