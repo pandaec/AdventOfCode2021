@@ -1,0 +1,87 @@
+#!fsharp
+
+let rawInput = IO.File.ReadAllText @"input\9.txt"
+
+let lines = rawInput
+            |> Seq.filter(fun c -> c <> '\r' && c <> '\n')
+            |> Seq.map(Char.GetNumericValue)
+            |> Seq.map(int)
+            |> Array.ofSeq
+    
+let x = rawInput.Split "\n"
+let h = Seq.length x
+let w = Seq.head x |> Seq.filter (Char.IsDigit) |> Seq.length
+
+#!fsharp
+
+// Part A
+let findLowPointsA (hmap:array<int>) = 
+    Array.mapi (fun k _ -> 
+                    let rx = k % w
+                    let ry = k / w
+                    let ids = [for a in [-1,0; 1,0; 0,-1; 0,1;] do 
+                                    let i,j = a
+                                    if rx+i>=0 && rx+i<w && ry+j>=0 && ry+j<h then 
+                                        (rx+i) + (ry+j)*w
+                                    else -1]
+                            |> List.filter (fun x -> x > -1)
+                    let isLowPoint = ids 
+                                     |> List.forall (fun i -> hmap.[i] > hmap.[k])
+                    if isLowPoint then hmap.[k]+1 else 0
+                ) hmap
+
+findLowPointsA lines |> Array.filter (fun x -> x > 0) |> Array.sum
+
+#!fsharp
+
+// Part B
+let findLowPoints (hmap:array<int>) = 
+    Array.mapi (fun k _ -> 
+                    let rx = k % w
+                    let ry = k / w
+                    let ids = [for a in [-1,0; 1,0; 0,-1; 0,1;] do 
+                                    let i,j = a
+                                    if rx+i>=0 && rx+i<w && ry+j>=0 && ry+j<h then 
+                                        (rx+i) + (ry+j)*w
+                                    else -1]
+                            |> List.filter (fun x -> x > -1)
+                    let isLowPoint = ids 
+                                     |> List.forall (fun i -> hmap.[i] > hmap.[k])
+                    if isLowPoint then k else -1
+                ) hmap
+    |> List.ofArray
+
+let rec findBasinPoints point (hmap:array<int>) (visited:Set<int>) = 
+    if Set.contains point visited then
+        visited
+    else
+        let x = point % w
+        let y = point / w
+        let neighbourPoints = 
+            [for a in [-1,0; 1,0; 0,-1; 0,1;] do 
+                let i,j = a
+                let isValidRange = x+i>=0 && x+i<w && y+j>=0 && y+j<h
+                if isValidRange then 
+                    let k = (x+i) + (y+j)*w
+                    if Array.get hmap k < 9 && not (Set.contains k visited) then
+                        Some k
+                    else None
+                else None]
+                |> List.filter(Option.isSome)
+                |> List.map(Option.get)
+        neighbourPoints 
+        |> List.fold (fun acc npoint ->
+                        let nextPoints = findBasinPoints npoint hmap acc
+                        Set.union acc nextPoints) (Set.add point visited)
+        
+
+
+
+let lowPoints = findLowPoints lines |> List.filter (fun x -> x > 0)
+lowPoints
+|> List.map (fun p ->  findBasinPoints p lines Set.empty)
+|> List.map (Seq.length)
+|> List.sort
+|> List.rev
+|> List.take 3
+|> List.reduce (*)
