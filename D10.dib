@@ -1,0 +1,121 @@
+#!fsharp
+
+let lines = IO.File.ReadLines @"input\10.txt" |> List.ofSeq
+
+#!fsharp
+
+// let firstInvalidChar stack c =
+//     match c with
+//     | '{' | '[' | '<' -> c :: stack
+//     | _ -> (
+//             let head = List.head stack
+//             match (head, c) with 
+//             | ('{', '}') -> List.tail stack
+//             | ('[', ']') -> List.tail stack
+//             | ('<', '>') -> List.tail stack
+//             | _ -> []
+//             )
+
+
+// Maybe wrong due to lack of () pattern
+// let firstInvalidChar stack c =
+//     match(stack) with
+//     | [] -> [c]
+//     | [x] when x='}'||x=']'||x='>' -> [x]
+//     | [x] -> [c;x;]
+//     | x::xs -> match (x, c) with
+//                 | ('{', '}') -> xs
+//                 | ('[', ']') -> xs
+//                 | ('<', '>') -> xs
+//                 | _ -> [c]
+
+// lines
+// |> Seq.map (fun s -> s.ToCharArray() |> List.ofArray)
+// |> Seq.map (fun a -> a 
+//                     |> List.fold firstInvalidChar List.empty
+//                     // |> List.tryFindBack (fun c -> c='}'||c=']'||c='>')
+//                     )
+
+#!fsharp
+
+// Part A
+let rec firstInvalidChar (stack:list<char>) (charList:list<char>) =
+    if List.isEmpty charList then
+        None
+    else 
+        let c = List.head charList
+        match c with
+        | '{' -> firstInvalidChar ('}' :: stack) (List.tail charList)
+        | '[' -> firstInvalidChar (']' :: stack) (List.tail charList)
+        | '<' -> firstInvalidChar ('>' :: stack) (List.tail charList)
+        | '(' -> firstInvalidChar (')' :: stack) (List.tail charList)
+        | _ -> 
+            match stack with
+            | [] -> Some c
+            | [x] when x = c -> firstInvalidChar [] (List.tail charList)
+            | [x] -> Some c
+            | x::xs when x = c -> firstInvalidChar xs (List.tail charList)
+            | x::xs -> Some c
+
+let score = function 
+            | Some ')' -> 3
+            | Some ']' -> 57
+            | Some '}' -> 1197
+            | Some '>' -> 25137
+            | _   -> 0
+
+let invalidChars = lines
+                    |> List.map (fun s -> s.ToCharArray() |> List.ofArray)
+                    |> List.map (fun s -> firstInvalidChar List.empty s)
+let ansA = 
+        invalidChars
+        |> List.filter (Option.isSome)
+        |> List.map (score)
+        |> List.sum
+
+ansA
+
+#!fsharp
+
+// Part B
+let rec remainChars (stack:list<char>) (charList:list<char>) =
+    if List.isEmpty charList then
+        stack
+    else 
+        let c = List.head charList
+        match c with
+        | '{' -> remainChars ('}' :: stack) (List.tail charList)
+        | '[' -> remainChars (']' :: stack) (List.tail charList)
+        | '<' -> remainChars ('>' :: stack) (List.tail charList)
+        | '(' -> remainChars (')' :: stack) (List.tail charList)
+        | _ -> 
+            match stack with
+            | [] -> [] // Impossible case
+            | [x] when x = c -> remainChars [] (List.tail charList)
+            | [x] -> [] // Impossible case
+            | x::xs when x = c -> remainChars xs (List.tail charList)
+            | x::xs -> [] // Impossible case
+
+let scoreB = 
+    function 
+    | ')' -> 1L
+    | ']' -> 2L
+    | '}' -> 3L
+    | '>' -> 4L
+
+let incompleteLines = 
+    (lines, invalidChars)
+    ||> List.zip
+    |> List.filter (fun (line, invalidChar) -> Option.isNone invalidChar)
+    |> List.map (fun (line,_) -> line)
+
+let lineScores =
+    incompleteLines
+    |> List.map (fun s -> 
+                    s.ToCharArray() 
+                    |> List.ofArray
+                    |> remainChars List.empty
+                    |> List.fold (fun acc x -> acc*5L + scoreB x) 0L)
+    |> List.sort
+
+lineScores[(lineScores |> List.length) / 2]
