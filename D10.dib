@@ -4,41 +4,8 @@ let lines = IO.File.ReadLines @"input\10.txt" |> List.ofSeq
 
 #!fsharp
 
-// let firstInvalidChar stack c =
-//     match c with
-//     | '{' | '[' | '<' -> c :: stack
-//     | _ -> (
-//             let head = List.head stack
-//             match (head, c) with 
-//             | ('{', '}') -> List.tail stack
-//             | ('[', ']') -> List.tail stack
-//             | ('<', '>') -> List.tail stack
-//             | _ -> []
-//             )
-
-
-// Maybe wrong due to lack of () pattern
-// let firstInvalidChar stack c =
-//     match(stack) with
-//     | [] -> [c]
-//     | [x] when x='}'||x=']'||x='>' -> [x]
-//     | [x] -> [c;x;]
-//     | x::xs -> match (x, c) with
-//                 | ('{', '}') -> xs
-//                 | ('[', ']') -> xs
-//                 | ('<', '>') -> xs
-//                 | _ -> [c]
-
-// lines
-// |> Seq.map (fun s -> s.ToCharArray() |> List.ofArray)
-// |> Seq.map (fun a -> a 
-//                     |> List.fold firstInvalidChar List.empty
-//                     // |> List.tryFindBack (fun c -> c='}'||c=']'||c='>')
-//                     )
-
-#!fsharp
-
 // Part A
+#!time
 let rec firstInvalidChar (stack:list<char>) (charList:list<char>) =
     if List.isEmpty charList then
         None
@@ -78,6 +45,7 @@ ansA
 #!fsharp
 
 // Part B
+#!time
 let rec remainChars (stack:list<char>) (charList:list<char>) =
     if List.isEmpty charList then
         stack
