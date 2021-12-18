@@ -14,6 +14,7 @@ let w = Seq.head x |> Seq.filter (Char.IsDigit) |> Seq.length
 
 #!fsharp
 
+#!time
 // Part A
 let findLowPointsA (hmap:array<int>) = 
     Array.mapi (fun k _ -> 
@@ -34,6 +35,7 @@ findLowPointsA lines |> Array.filter (fun x -> x > 0) |> Array.sum
 
 #!fsharp
 
+#!time
 // Part B
 let findLowPoints (hmap:array<int>) = 
     Array.mapi (fun k _ -> 
