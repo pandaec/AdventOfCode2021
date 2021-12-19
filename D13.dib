@@ -1,0 +1,60 @@
+#!fsharp
+
+let input = IO.File.ReadAllLines @"input\13.txt"
+
+let seperateLine = input |> Seq.findIndex (fun s -> s.Length = 0)
+
+let dots = 
+    input[0..seperateLine-1]
+    |> Seq.map (fun s -> 
+                let a = s.Split ","
+                int a[0],  int a[1])
+
+let instructions =
+    input[seperateLine+1..input.Length-1]
+    |> Seq.map (fun s -> 
+                let a = s.Split "="
+                a[0][a[0].Length-1], int a[1])
+
+#!fsharp
+
+let flipBoard (dots:seq<int*int>) (instruction:(char * int)) = 
+    let dir, foldPos = instruction
+    dots
+    |> Seq.map (fun (x,y) -> 
+                    match dir with
+                    | 'x' when x >= foldPos -> (foldPos*2 - x, y)
+                    | 'x' -> (x, y)
+                    | 'y' when y >= foldPos -> (x, foldPos*2-y)
+                    | 'y' -> (x, y))
+
+#!fsharp
+
+#!time
+// Part A
+flipBoard dots (Seq.head instructions)
+|> Seq.distinct
+|> Seq.length
+
+#!fsharp
+
+#!time
+// Part B
+let finalDots = 
+    instructions
+    |> Seq.fold (fun board instruction -> flipBoard board instruction) dots
+    |> Seq.distinct
+    |> Seq.sort
+
+let w = finalDots |> Seq.maxBy (fun (x,y) -> x) |> fst
+let h = finalDots |> Seq.maxBy (fun (x,y) -> y) |> snd
+
+for y = 0 to h do
+    for x = 0 to w do
+        let found = finalDots |> Seq.tryFind (fun (x',y') -> x'=x && y'= y)
+        let x = 
+            match found with
+            | Some p -> "#"
+            | None -> "."
+        printf "%s" x
+    printf "\n"
