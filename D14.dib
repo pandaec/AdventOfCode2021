@@ -1,0 +1,119 @@
+#!fsharp
+
+let input = IO.File.ReadAllLines @"input\14.txt"
+let template = string input[0]
+let rules = 
+    input[2..input.Length-1]
+    |> Seq.map (fun s -> 
+                    let a = s.Split " -> "
+                    a[0],a[1])
+    |> Map.ofSeq
+rules
+
+#!fsharp
+
+let step (str:string) = 
+    let r = 
+        str
+        |> Seq.pairwise
+        |> Seq.map(fun (f,s) -> 
+                    let key = string f + string s
+                    let n = rules |> Map.find key
+                    string f + n)
+        |> String.concat ""
+    r + string str.[str.Length-1]
+
+#!fsharp
+
+// Part A
+#!time
+let resultA = 
+    [1..10]
+    |> Seq.fold (fun s _ -> step s) template
+
+let countA = 
+    resultA
+    |> Seq.countBy id
+    |> Seq.sortBy (fun (el, count) -> count)
+
+let _, minCount = Seq.head countA 
+let _, maxCount = Seq.last countA
+maxCount - minCount
+
+#!fsharp
+
+let stepB (polyCount:Map<string, int64>) = 
+    (Map.empty, polyCount)
+    ||> Map.fold 
+        (fun acc key (v:int64) -> 
+            let newElem = rules |> Map.find key
+            let frontElem = string key.[0] + newElem
+            let backElem = newElem + string key.[1]
+            acc 
+            |> Map.change frontElem (
+                fun x -> 
+                    match x with 
+                    | Some s -> Some (s + v)
+                    | None -> Some v)
+            |> Map.change backElem (
+                fun x -> 
+                    match x with 
+                    | Some s -> Some (s + v)
+                    | None -> Some v))
+
+// counts of input (step 0)
+let initCounts= 
+    template
+    |> Seq.pairwise
+    |> Seq.map (fun (a,b) -> (string a + string b, 1L))
+    |> Seq.groupBy (fun (k,v) -> k)
+    |> Seq.map (fun (k, counts) -> (k, counts |> Seq.sumBy(fun (_,v) -> v)))
+    |> Map.ofSeq
+
+initCounts
+
+// let endCounts = 
+//     frontEndCounts
+//     |> Seq.map (fun (_,k,v) -> (k,v))
+//     |> Seq.groupBy fst
+//     |> Seq.map (fun (k, counts) -> (k, counts |> Seq.sumBy snd))
+
+// Not 100% sure why work...
+// No need to get max between front & end counts
+// Front count doesn't include last char
+// End count doesnt include first char
+
+#!fsharp
+
+// Part B
+#!time
+let frontEndCounts = 
+    [1..40]
+    |> List.fold (fun acc _ -> stepB acc) initCounts 
+    |> Map.toSeq
+    |> Seq.map(fun (k,v) -> (string k.[0], string k.[1], v))
+
+// let endCounts = 
+//     frontEndCounts
+//     |> Seq.map (fun (_,k,v) -> (k,v))
+//     |> Seq.groupBy fst
+//     |> Seq.map (fun (k, counts) -> (k, counts |> Seq.sumBy snd))
+//     |> Seq.sortBy(fun (k, v) -> v)
+
+// Only count first char from all pattern
+// Then add missing input last char count + 1
+let frontCounts = 
+    frontEndCounts
+    |> Seq.map (fun (k,_,v) -> (k,v))
+    |> Seq.groupBy fst
+    |> Seq.map (fun (k, counts) -> (k, counts |> Seq.sumBy snd))
+    // input last char count + 1
+    |> Seq.map (fun (k, count) -> 
+                    match k with
+                    | s when s = string template.[template.Length - 1] -> (k, count + 1L)
+                    | _ -> (k, count))
+    |> Seq.sortBy(fun (k, v) -> v)
+
+let _, minCountB = Seq.head frontCounts 
+let _, maxCountB = Seq.last frontCounts
+maxCountB - minCountB
