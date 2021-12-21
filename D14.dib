@@ -72,17 +72,6 @@ let initCounts=
 
 initCounts
 
-// let endCounts = 
-//     frontEndCounts
-//     |> Seq.map (fun (_,k,v) -> (k,v))
-//     |> Seq.groupBy fst
-//     |> Seq.map (fun (k, counts) -> (k, counts |> Seq.sumBy snd))
-
-// Not 100% sure why work...
-// No need to get max between front & end counts
-// Front count doesn't include last char
-// End count doesnt include first char
-
 #!fsharp
 
 // Part B
