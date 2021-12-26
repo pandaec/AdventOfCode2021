@@ -1,0 +1,93 @@
+#!fsharp
+
+let inputBoard =
+    File.ReadAllLines @"input/15.txt"
+    |> Array.map (fun line -> 
+        line 
+        |> Seq.map (fun c -> c |> string |> int)
+        |> Array.ofSeq)
+
+let h = Array.length inputBoard
+let w = Array.length inputBoard.[0]
+inputBoard
+
+#!fsharp
+
+let neighbours (x, y, bw, bh) =
+  [ (x - 1, y)
+    (x, y - 1)
+    (x, y + 1)
+    (x + 1, y)]
+    |> List.filter (fun (x',y') -> x' >= 0 && x' < bw && y' >= 0 && y' < bh)
+
+#!fsharp
+
+// Part A
+let dijkstra (board:int array array) (source:int*int) (target:int*int) =
+
+    // Note: Array.create contains the same array address (i.e. dist[0][0] <- 0 doesn't work)
+    let h' = Array.length board
+    let w' = Array.length (board[0])
+    let dist' = Array.create h' (Array.create w' Int32.MaxValue)
+    // Set 0,0 to 0
+    let initDist = Array.updateAt 0 (Array.updateAt 0 0 dist'.[0]) dist'
+    let initQueue = [for y in 0..h'-1 do for x in 0..w'-1 -> (x,y)]
+       
+    let rec helper (queue:list<int*int>) (dist:int array array) =
+        match queue with
+        | [] -> dist
+        | x::xs -> 
+            let u = List.minBy (fun (x,y) -> dist.[y].[x]) queue
+            let (ux, uy) = u
+
+            // Early return when destination is found
+            if u = target then
+                dist
+            else
+                // Remove u from queue
+                let nextQueue = queue |> List.filter(fun p -> p <> u)
+
+                let newDist = 
+                    neighbours (ux, uy, w', h')
+                    |> List.filter(fun p -> List.contains p queue)
+                    |> List.map (fun (px, py) -> 
+                                    let d' = dist[uy][ux] + board[py][px]
+                                    let d = min d' (dist[py][px])
+                                    (px, py, d))
+                    |> List.fold (fun acc (x,y,d) -> 
+                                    Array.updateAt y (Array.updateAt x d acc.[y]) acc) dist
+                helper nextQueue newDist
+    helper initQueue initDist
+
+#!fsharp
+
+#!time
+// Part A
+// no early return = 7970.3089ms
+// early return = 7638.3167ms
+let pathScores = dijkstra inputBoard (0,0) (w-1,h-1)
+pathScores.[w-1].[h-1]
+
+#!fsharp
+
+//  for r = 0 to bh- 1 do
+//     printfn "\n"
+//     for c = 0 to bw - 1 do
+//         printf "%d," fullmap.[r].[c]
+
+#!fsharp
+
+// Part B
+let bw = w * 5
+let bh = h * 5
+let fullmap =
+    [| for y in 0..bh-1 do
+            [| for x in 0..bw-1 ->  
+                (inputBoard[y%h][x%w] + y/h + x/w - 1)  % 9 + 1 |] |]
+
+#!fsharp
+
+#! time
+// 104m48.8s
+let pathScores = dijkstra fullmap (0,0) (bw-1,bh-1)
+pathScores.[bw-1].[bh-1]
